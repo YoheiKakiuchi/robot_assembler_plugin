@@ -4,7 +4,8 @@
 #include <cnoid/SceneLoader>
 #include <cnoid/MeshGenerator>
 #include <cnoid/CloneMap>
-
+#include <cnoid/SceneCameras>
+#include <cnoid/SceneLights>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 
@@ -15,6 +16,75 @@ namespace filesystem = cnoid::stdx::filesystem;
 
 namespace cnoid {
 namespace robot_assembler {
+
+static void hoge(SgObject *sgo)
+{
+    {
+    SgMaterial *ptr = dynamic_cast<SgMaterial *>(sgo);
+    if (!!ptr) {
+        std::cout << "material";
+    } }
+    {
+    SgMesh *ptr = dynamic_cast<SgMesh *>(sgo);
+    if (!!ptr) {
+        std::cout << "mesh";
+    } }
+    {
+    SgTexture *ptr = dynamic_cast<SgTexture *>(sgo);
+    if (!!ptr) {
+        std::cout << "texture";
+    } }
+    {
+    SgPolygonMesh *ptr = dynamic_cast<SgPolygonMesh *>(sgo);
+    if (!!ptr) {
+        std::cout << "polygon_mesh";
+    } }
+    {
+    SgPointSet *ptr = dynamic_cast<SgPointSet *>(sgo);
+    if (!!ptr) {
+        std::cout << "point_set";
+    } }
+    {
+    SgLineSet *ptr = dynamic_cast<SgLineSet *>(sgo);
+    if (!!ptr) {
+        std::cout << "LineSet";
+    } }
+    {
+    SgLight *ptr = dynamic_cast<SgLight *>(sgo);
+    if (!!ptr) {
+        std::cout << "Light";
+    } }
+    {
+    SgCamera *ptr = dynamic_cast<SgCamera *>(sgo);
+    if (!!ptr) {
+        std::cout << "Camera";
+    } }
+}
+static void traverseSG(SgObject *sgo, int indent = 0)
+{
+    for(int i=0;i<indent;i++) std::cout << "  ";
+    std::cout << "sg(name) : " << sgo->name() << std::endl;
+    if(sgo->isNode()) {
+        for(int i=0;i<indent;i++) std::cout << "  ";
+        std::cout << "->sg(class) : " << sgo->toNode()->className() << std::endl;
+    } else {
+        for(int i=0;i<indent;i++) std::cout << "  ";
+        std::cout << "->sg(type) : ";
+        hoge(sgo); std::cout << std::endl;
+    }
+    SgPosTransform *pt = dynamic_cast<SgPosTransform*>(sgo);
+    if (!!pt) {
+        coordinates cds(pt->position());
+        for(int i=0;i<indent;i++) std::cout << "  ";
+        std::cout << "->sg(trans) : " << cds << std::endl;
+    }
+    //sgo->isGroupNode();
+    //sgo->isTransformNode();
+    int num = sgo->numChildObjects();
+    for(int i = 0; i < num; i++) {
+        traverseSG(sgo->childObject(i), indent + 2);
+    }
+}
 
 const Vector3f default_body_color(0.0f, 0.0f, 0.8f);
 
