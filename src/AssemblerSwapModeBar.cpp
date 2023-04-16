@@ -56,6 +56,10 @@ void AssemblerSwapModeBar::Impl::clickedAction()
 {
     manager->com_swap_mode();
     if(manager->isRunningAssembler()) {
+        QIcon qi(":/RA/icon/cnoid.svg");
+        button->setIcon(qi);
     } else {
+        QIcon qi(":/RA/icon/roboasm.svg");
+        button->setIcon(qi);
     }
 }

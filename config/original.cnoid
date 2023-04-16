@@ -1,3 +1,4 @@
+### copy of http://github.com/choreonoid/choreonoid.git/src/Base/project/layout.cnoid
 isNewProjectTemplate: true
 
 optionalPlugins: [ Python ]
@@ -127,6 +128,7 @@ layoutOfToolBars:
     - 
       - { name: "BodyBar", x: 0, priority: 0 }
       - { name: "KinematicsBar", x: 0, priority: 1 }
-      - { name: "SceneBar", x: 0, priority: 2 }
-      - { name: "GraphBar", x: 0, priority: 3 }
-      - { name: "CaptureBar", x: 0, priority: 4 }
+      - { name: "AssemblerSwapModeBar", x: 0, priority: 2 } ## added by robot_assembler
+      - { name: "SceneBar", x: 0, priority: 3 }
+      - { name: "GraphBar", x: 0, priority: 4 }
+      - { name: "CaptureBar", x: 0, priority: 5 }
