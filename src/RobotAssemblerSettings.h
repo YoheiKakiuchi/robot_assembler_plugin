@@ -151,12 +151,19 @@ struct CNOID_EXPORT ExtraInfo
         IMU,
         Touch,
         Force,
+        Color,
+        Distance,
+        Position,
+        Camera,
+        Depth,
+        RGBD,
+        Ray,
     };
     std::string name;
     Type type;
     coordinates coords;
-    // parameters Mapping
     std::string description;
+    std::vector<double> parameters;
 };
 struct CNOID_EXPORT Geometry
 {

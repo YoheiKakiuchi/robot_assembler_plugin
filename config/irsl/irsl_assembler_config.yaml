@@ -2470,6 +2470,14 @@ PartsSettings:
       types: [LEGO-2S]
       translation: [11.9, 11.9, 0.0]
       rotation: [1., 0., 0., 0.0]
+    extra-data:
+    -
+      name: TOF_Sensor
+      type: Distance
+      translation: [0, 0, 100]
+      rotation: [-0.5773502691896, -0.5773502691896, -0.5773502691896, 120]
+      ##parameters: {} depend on sensor-type
+      #description: no description
   -
     type: sensor-mounter
     class: M5Stack sensor mount (Socket)

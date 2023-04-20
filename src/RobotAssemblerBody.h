@@ -14,6 +14,9 @@ void CNOID_EXPORT createSceneFromGeometry(SgGroup *sg_main, std::vector<Geometry
                              const std::string &_proj_dir = std::string(), const Vector3f &_color = Vector3f::Zero());
 void CNOID_EXPORT createSceneFromGeometry(SgGroup *sg_main, std::vector<Geometry> &geom_list, const Vector3f &_color);
 
+typedef std::pair<Device *, Link *> DevLinkPair;
+typedef std::vector<DevLinkPair> DevLinkList;
+
 class CNOID_EXPORT RoboasmBodyCreator
 {
 public:
@@ -40,8 +43,8 @@ protected:
     RoboasmRobotPtr currentRobot; // for accessing local info
 
     BodyPtr _createBody(RoboasmRobotPtr _rb, const std::string &_name);
-    Link *createLink(RoboasmPartsPtr _pt, bool _is_root = false);
-    bool appendChildLink(BodyPtr _bd, Link *_lk, RoboasmPartsPtr _pt);
+    Link *createLink(RoboasmPartsPtr _pt, bool _is_root, DevLinkList &lst);
+    bool appendChildLink(BodyPtr _bd, Link *_lk, RoboasmPartsPtr _pt, DevLinkList &lst);
     bool mergeFixedJoint(BodyPtr _bd);
 };
 

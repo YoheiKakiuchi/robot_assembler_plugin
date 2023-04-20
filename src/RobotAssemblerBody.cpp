@@ -5,6 +5,14 @@
 #include <cnoid/MeshGenerator>
 #include <cnoid/CloneMap>
 
+// Device
+#include <cnoid/Camera>
+#include <cnoid/RangeCamera>
+#include <cnoid/RangeSensor>
+#include <cnoid/AccelerationSensor>
+#include <cnoid/RateGyroSensor>
+#include <cnoid/ForceSensor>
+
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 
@@ -107,12 +115,54 @@ void createSceneFromGeometry(SgGroup *sg_main, std::vector<Geometry> &geom_list,
         }
     }
 }
+static cnoid::Device *createDevice(ExtraInfo &_info)
+{
+    cnoid::Device *ret = nullptr;
+    switch(_info.type) {
+    case ExtraInfo::Distance:
+    {
+        cnoid::RangeCamera *cam = new RangeCamera();
+        cam->setImageType(Camera::COLOR_IMAGE);
+        cam->setLensType(Camera::NORMAL_LENS);
 
+        cam->setNearClipDistance(0.001);
+        cam->setFarClipDistance(100);
+        cam->setFieldOfView(50.0/180.0*M_PI);
+        cam->setResolution(3, 3);
+
+        //cam->setOpticalFrame(VisionSensor::Robotics);
+        cam->setOpticalFrame(VisionSensor::CV);
+        cam->setFrameRate(30);
+
+        //cam->setIndex(int index);
+        //cam->setId(int id);
+        cam->setName(_info.name);
+        //cam->setLink(Link* link);
+
+        Isometry3 pos;
+        _info.coords.toPosition(pos);
+        DEBUG_STREAM("dev: " << _info.coords);
+        cam->setLocalPosition(pos);
+
+        // RangeCamera
+        cam->setMinDistance(0.001);
+        cam->setMaxDistance(10.0);
+        //void setOrganized(bool on);
+        //void setDense(bool on) { isDense_ = on; }
+        //void setDetectionRate(double r);
+        //void setErrorDeviation(double d);
+        ret = cam;
+    }
+    break;
+    }
+
+    return ret;
+}
 RoboasmBodyCreator::RoboasmBodyCreator(const std::string &_proj_dir) : body(nullptr), joint_counter(0), merge_fixed_joint(false)
 {
     project_directory = _proj_dir;
 }
-Link *RoboasmBodyCreator::createLink(RoboasmPartsPtr _pt, bool _is_root)
+Link *RoboasmBodyCreator::createLink(RoboasmPartsPtr _pt, bool _is_root, DevLinkList &_dev_list)
 {
     Link *lk = new Link();
     coordinates link_origin_to_self_;
@@ -224,14 +274,16 @@ Link *RoboasmBodyCreator::createLink(RoboasmPartsPtr _pt, bool _is_root)
             lk->setJointId(-1);
             map_link_cnoid_roboasm.insert(std::pair<std::string, std::string>(nm_, _pt->name()));
         }
-    } // root or not root
+    } // if (_is_root) {
+
+    // Mass Parameter
     if (!!_pt->info && _pt->info->hasMassParam) {
         lk->setCenterOfMass(_pt->info->COM);
         lk->setMass(_pt->info->mass);
         lk->setInertia(_pt->info->inertia_tensor);
     }
 #if 0
-    // shape
+    // Debug for shape
     MeshGenerator mg;
     // com / next point
     { // red parts(origin)
@@ -264,6 +316,7 @@ Link *RoboasmBodyCreator::createLink(RoboasmPartsPtr _pt, bool _is_root)
         lk->addShapeNode(trs); //
     }
 #endif
+    // Geometry
     if(!!_pt->info) {
         SgPosTransformPtr trs_vis;
         SgPosTransformPtr trs_col;
@@ -298,18 +351,28 @@ Link *RoboasmBodyCreator::createLink(RoboasmPartsPtr _pt, bool _is_root)
             lk->addCollisionShapeNode(trs_vis);
         }
     }
+    // Device
+    if(!!_pt->info && _pt->info->extra_data.size() > 0) {
+        for(auto it = _pt->info->extra_data.begin();
+            it != _pt->info->extra_data.end(); it++) {
+            cnoid::Device *dev = createDevice(*it);
+            if(!!dev) {
+                _dev_list.push_back(std::make_pair(dev, lk));
+            }
+        }
+    }
     return lk;
 }
-bool RoboasmBodyCreator::appendChildLink(BodyPtr _bd, Link *_lk, RoboasmPartsPtr _pt)
+bool RoboasmBodyCreator::appendChildLink(BodyPtr _bd, Link *_lk, RoboasmPartsPtr _pt, DevLinkList &_dev_list)
 {
     partsPtrList plst;
     _pt->childParts(plst);
     for (auto it = plst.begin(); it != plst.end(); it++) {
-        Link *clk = createLink(*it);
+        Link *clk = createLink(*it, false, _dev_list);
         if(!!clk) {
             _lk->appendChild(clk);
             _bd->updateLinkTree();
-            appendChildLink(_bd, clk, (*it));
+            appendChildLink(_bd, clk, (*it), _dev_list);
         }
     }
     return true;
@@ -331,13 +394,25 @@ BodyPtr RoboasmBodyCreator::_createBody(RoboasmRobotPtr _rb, const std::string &
         body->setName(_rb->name());
         body->setModelName(_rb->name());
     }
-
-    Link *lk = createLink(root_, true);
+    DevLinkList dev_list;
+    Link *lk = createLink(root_, true, dev_list);
     body->setRootLink(lk);
     body->updateLinkTree();
 
-    appendChildLink(body, lk, root_);
+    appendChildLink(body, lk, root_, dev_list);
 
+    // devices
+    if (dev_list.size() > 0) {
+        for(auto it = dev_list.begin(); it != dev_list.end(); it++) {
+            Device *dev = it->first;
+            Link *lk = it->second;
+            if (!body->addDevice(dev, lk)) {
+                ERROR_STREAM("failed : add device");
+            } else {
+                DEBUG_STREAM("!!!!!!!!!!!! add device !!!!!!!!!!!!!");
+            }
+        }
+    }
     return body;
 }
 BodyPtr RoboasmBodyCreator::createBody(RoboasmRobotPtr _rb, const std::string &_name)
@@ -444,6 +519,7 @@ static bool mergeLink(Link *plink, Link *clink)
         // append children of clink to plink
         plink->appendChild(all_child[i]);
     }
+    // [TODO] merge Devices
     return true;
 }
 bool RoboasmBodyCreator::mergeFixedJoint(BodyPtr _bd)
