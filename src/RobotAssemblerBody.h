@@ -35,6 +35,7 @@ protected:
     std::string project_directory;
     BodyPtr body;
     int joint_counter;
+    int device_counter;
     bool merge_fixed_joint;
     std::map<std::string, std::string> map_link_cnoid_roboasm;  // key: cnoid_name, value: roboasm_name
     //std::map<std::string, std::string> map_joint_cnoid_roboasm; // key: cnoid_name, value: roboasm_name

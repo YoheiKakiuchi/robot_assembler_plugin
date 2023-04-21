@@ -149,20 +149,28 @@ struct CNOID_EXPORT ExtraInfo
     enum Type {
         None,
         IMU,
+        Acceleration,
+        RateGyro,
         Touch,
         Force,
         Color,
         Distance,
-        Position,
         Camera,
         Depth,
         RGBD,
         Ray,
+        Position,
+        Light,
+        PointLight,
+        SpotLight,
+        DegitalIO,
+        AnalogIO,
     };
     std::string name;
     Type type;
     coordinates coords;
     std::string description;
+    std::string device_mapping;
     std::vector<double> parameters;
 };
 struct CNOID_EXPORT Geometry

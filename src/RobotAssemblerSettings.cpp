@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cmath>
 #include <algorithm> // transform
+#include <sstream>
 
 //#include <cnoid/UTF8>
 //#include <cnoid/stdx/filesystem>
@@ -1113,6 +1114,20 @@ bool Settings::Impl::parseExtraInfo(ValueNode *vn, ExtraInfo &einfo)
     }
     {   // parameters
         bool res = mapVector(mp, "parameters", einfo.parameters, std::cerr, false);
+    }
+    {   // device_mapping
+        ValueNode *vn_ = mp->find("device-mapping");
+        if(vn_->isValid() && vn_->isMapping()) {
+            YAMLWriter yw_;
+            yw_.setMessageSink(std::cerr);
+            yw_.setDoubleFormat("%12.12f");
+            std::ostringstream oss_;
+            yw_.setOutput(oss_);
+            MappingPtr mp_ = vn_->toMapping();
+            yw_.putNode(mp_);
+            yw_.flush();
+            einfo.device_mapping = oss_.str();
+        }
     }
     return true;
 }

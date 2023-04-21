@@ -12,6 +12,9 @@
 #include <cnoid/AccelerationSensor>
 #include <cnoid/RateGyroSensor>
 #include <cnoid/ForceSensor>
+#include <cnoid/Light>
+#include <cnoid/PointLight>
+#include <cnoid/SpotLight>
 
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
@@ -115,50 +118,128 @@ void createSceneFromGeometry(SgGroup *sg_main, std::vector<Geometry> &geom_list,
         }
     }
 }
-static cnoid::Device *createDevice(ExtraInfo &_info)
+static cnoid::Device *createDevice(ExtraInfo &_info, int dev_no)
 {
     cnoid::Device *ret = nullptr;
+    MappingPtr mp_ = nullptr;
+    if (_info.device_mapping.size() > 0) {
+        YAMLReader rd_;
+        bool res_ = rd_.parse(_info.device_mapping);
+        if(res_ && rd_.numDocuments() > 0) {
+            ValueNode *vn_ = rd_.document();
+            if( vn_->isValid() && vn_->isMapping() ) {
+                mp_ = vn_->toMapping();
+            }
+        }
+    }
+
     switch(_info.type) {
-    case ExtraInfo::Distance:
+    case ExtraInfo::IMU:
+        break;
+    case ExtraInfo::Acceleration:
     {
-        cnoid::RangeCamera *cam = new RangeCamera();
-        cam->setImageType(Camera::COLOR_IMAGE);
-        cam->setLensType(Camera::NORMAL_LENS);
-
-        cam->setNearClipDistance(0.001);
-        cam->setFarClipDistance(100);
-        cam->setFieldOfView(50.0/180.0*M_PI);
-        cam->setResolution(3, 3);
-
-        //cam->setOpticalFrame(VisionSensor::Robotics);
-        cam->setOpticalFrame(VisionSensor::CV);
-        cam->setFrameRate(30);
-
-        //cam->setIndex(int index);
-        //cam->setId(int id);
-        cam->setName(_info.name);
-        //cam->setLink(Link* link);
-
-        Isometry3 pos;
-        _info.coords.toPosition(pos);
-        DEBUG_STREAM("dev: " << _info.coords);
-        cam->setLocalPosition(pos);
-
-        // RangeCamera
-        cam->setMinDistance(0.001);
-        cam->setMaxDistance(10.0);
-        //void setOrganized(bool on);
-        //void setDense(bool on) { isDense_ = on; }
-        //void setDetectionRate(double r);
-        //void setErrorDeviation(double d);
-        ret = cam;
+        cnoid::AccelerationSensor *dev_ = new AccelerationSensor();
+        if(!!mp_ && mp_->isValid()) {
+            dev_->readSpecifications(mp_);
+        }
+        ret = dev_;
     }
     break;
+    case ExtraInfo::RateGyro:
+    {
+        cnoid::RateGyroSensor *dev_ = new RateGyroSensor();
+        if(!!mp_ && mp_->isValid()) {
+            dev_->readSpecifications(mp_);
+        }
+        ret = dev_;
     }
+    break;
+    case ExtraInfo::Touch:
+        ERROR_STREAM(" TouchSensor is not implemented yet : " << _info.name);
+        break;
+    case ExtraInfo::Force:
+    {
+        cnoid::ForceSensor *dev_ = new ForceSensor();
+        if(!!mp_ && mp_->isValid()) {
+            dev_->readSpecifications(mp_);
+        }
+        ret = dev_;
+    }
+    case ExtraInfo::Color:
+    case ExtraInfo::Camera:
+    {
+        cnoid::Camera *dev_ = new Camera();
+        if(!!mp_ && mp_->isValid()) {
+            dev_->readSpecifications(mp_);
+        }
+        ret = dev_;
+    }
+    break;
+    case ExtraInfo::Distance:
+    case ExtraInfo::Depth:
+    case ExtraInfo::RGBD:
+    {
+        cnoid::RangeCamera *dev_ = new RangeCamera();
+        if(!!mp_ && mp_->isValid()) {
+            dev_->readSpecifications(mp_);
+        }
+        ret = dev_;
+    }
+    break;
+    case ExtraInfo::Ray:
+    {
+        cnoid::RangeSensor *dev_ = new RangeSensor();
+        if(!!mp_ && mp_->isValid()) {
+            dev_->readSpecifications(mp_);
+        }
+        ret = dev_;
+    }
+    break;
+    case ExtraInfo::Position:
+        ERROR_STREAM(" PositionSensor is not implemented yet : " << _info.name);
+        break;
+    case ExtraInfo::Light:
+    case ExtraInfo::PointLight:
+    {
+        cnoid::PointLight *dev_ = new PointLight();
+        if(!!mp_ && mp_->isValid()) {
+            dev_->readSpecifications(mp_);
+        }
+        ret = dev_;
+    }
+    case ExtraInfo::SpotLight:
+    {
+        cnoid::SpotLight *dev_ = new SpotLight();
+        if(!!mp_ && mp_->isValid()) {
+            dev_->readSpecifications(mp_);
+        }
+        ret = dev_;
+    }
+    case ExtraInfo::DegitalIO:
+        ERROR_STREAM(" DegitalIO is not implemented yet : " << _info.name);
+        break;
+    case ExtraInfo::AnalogIO:
+        ERROR_STREAM(" AnalogIO is not implemented yet : " << _info.name);
+        break;
+    default:
+        ERROR_STREAM(" invalid device-type [" << _info.name << "] " << _info.type);
+        break;
+    }
+
+    if (!ret) return ret;
+
+    std::ostringstream oss_;
+    oss_ << _info.name << dev_no;
+    ret->setName(oss_.str());
+
+    DEBUG_STREAM(" device local: " << _info.coords);
+    Isometry3 pos;
+    _info.coords.toPosition(pos);
+    ret->setLocalPosition(pos);
 
     return ret;
 }
-RoboasmBodyCreator::RoboasmBodyCreator(const std::string &_proj_dir) : body(nullptr), joint_counter(0), merge_fixed_joint(false)
+RoboasmBodyCreator::RoboasmBodyCreator(const std::string &_proj_dir) : body(nullptr), joint_counter(0), device_counter(0), merge_fixed_joint(false)
 {
     project_directory = _proj_dir;
 }
@@ -355,7 +436,7 @@ Link *RoboasmBodyCreator::createLink(RoboasmPartsPtr _pt, bool _is_root, DevLink
     if(!!_pt->info && _pt->info->extra_data.size() > 0) {
         for(auto it = _pt->info->extra_data.begin();
             it != _pt->info->extra_data.end(); it++) {
-            cnoid::Device *dev = createDevice(*it);
+            cnoid::Device *dev = createDevice(*it, device_counter++);
             if(!!dev) {
                 _dev_list.push_back(std::make_pair(dev, lk));
             }
