@@ -196,6 +196,7 @@ struct CNOID_EXPORT Geometry
     Parts *parent_parts;
     //std::string description;
 };
+typedef std::shared_ptr<Geometry> GeometryPtr;
 class CNOID_EXPORT Parts
 {
 public:
@@ -220,6 +221,7 @@ public:
     std::vector<Actuator> actuators;
     std::vector<ExtraInfo> extra_data;
 };
+typedef std::shared_ptr<Parts> PartsPtr;
 ////
 class CNOID_EXPORT Settings
 {
