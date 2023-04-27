@@ -39,7 +39,7 @@ PYBIND11_MODULE(RobotAssembler, m)
     .def_property_readonly("url", [](cnoid::robot_assembler::Geometry &self) { return self.url; } )
     .def_property_readonly("coords", [](cnoid::robot_assembler::Geometry &self) { return self.coords; } )
     .def_property_readonly("scale", [](cnoid::robot_assembler::Geometry &self) { return self.scale; } )
-    .def_property_readonly("color", [](cnoid::robot_assembler::Geometry &self) { return self.color; } )      
+    .def_property_readonly("color", [](cnoid::robot_assembler::Geometry &self) { return self.color; } )
     .def("is_mesh", [](cnoid::robot_assembler::Geometry &self) { return (self.type == cnoid::robot_assembler::Geometry::Mesh); } )
     ;
     // Parts
@@ -51,50 +51,50 @@ PYBIND11_MODULE(RobotAssembler, m)
     .def_property_readonly("center_of_mass", [](cnoid::robot_assembler::Parts &self) { return self.COM; } )
     .def_property_readonly("inertia_tensor", [](cnoid::robot_assembler::Parts &self) { return self.inertia_tensor; } )
     .def("visual", [](cnoid::robot_assembler::Parts &self, int idx) {
-      try {
-	return self.visual.at(idx);
-      } catch ( ... ) {
-      }
-      cnoid::robot_assembler::Geometry ret;
-      return ret;
-    } )
+            try {
+                return self.visual.at(idx);
+            } catch ( ... ) {
+            }
+            cnoid::robot_assembler::Geometry ret;
+            return ret;
+        } )
     .def("collision", [](cnoid::robot_assembler::Parts &self, int idx) {
-      try {
-	return self.collision.at(idx);
-      } catch ( ... ) {
-      }
-      cnoid::robot_assembler::Geometry ret;
-      return ret;
-    } )
+            try {
+                return self.collision.at(idx);
+            } catch ( ... ) {
+            }
+            cnoid::robot_assembler::Geometry ret;
+            return ret;
+        } )
     ;
     // Assembler
     py::class_< cnoid::robot_assembler::Settings, cnoid::robot_assembler::SettingsPtr > settings_cls(m, "RobotAssemblerSettings");
     settings_cls.def(py::init<>())
     .def_property_readonly("number_of_parts", [](cnoid::robot_assembler::Settings &self) { return self.mapParts.size(); } )
     .def_property_readonly("parts_names", [](cnoid::robot_assembler::Settings &self) {
-      std::vector<std::string> lst_;
-      for( auto it = self.mapParts.begin(); it != self.mapParts.end(); it++ ) {
-  	lst_.push_back(it->first);
-      }
-      return lst_; })
+            std::vector<std::string> lst_;
+            for( auto it = self.mapParts.begin(); it != self.mapParts.end(); it++ ) {
+                lst_.push_back(it->first);
+            }
+            return lst_; })
     .def("parts", [](cnoid::robot_assembler::Settings &self, const int idx) {
-      int index = 0;
-      for( auto it = self.mapParts.begin(); it != self.mapParts.end(); it++, index++ ) {
-	if (index == idx) {
-	  return it->second;
-	}
-      }
-      cnoid::robot_assembler::Parts ret;
-      return ret;
-    } )
+            int index = 0;
+            for( auto it = self.mapParts.begin(); it != self.mapParts.end(); it++, index++ ) {
+                if (index == idx) {
+                    return it->second;
+                }
+            }
+            cnoid::robot_assembler::Parts ret;
+            return ret;
+        } )
     .def("parts", [](cnoid::robot_assembler::Settings &self, const std::string &name) {
-      try {
-	return self.mapParts.at(name);
-      } catch ( ... ) {
-      }
-      cnoid::robot_assembler::Parts ret;
-      return ret;
-    })
+            try {
+                return self.mapParts.at(name);
+            } catch ( ... ) {
+            }
+            cnoid::robot_assembler::Parts ret;
+            return ret;
+        })
     .def("parseYaml", &cnoid::robot_assembler::Settings::parseYaml)
     ;
     // bounding box from
