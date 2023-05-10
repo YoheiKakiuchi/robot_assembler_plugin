@@ -118,7 +118,7 @@ void createSceneFromGeometry(SgGroup *sg_main, std::vector<Geometry> &geom_list,
         }
     }
 }
-static cnoid::Device *createDevice(ExtraInfo &_info, int dev_no)
+static cnoid::Device *createDevice(ExtraInfo &_info, int dev_no, coordinates &link_origin_to_self_)
 {
     cnoid::Device *ret = nullptr;
     MappingPtr mp_ = nullptr;
@@ -283,14 +283,16 @@ Link *RoboasmBodyCreator::createLink(RoboasmPartsPtr _pt, bool _is_root, DevLink
         if(p_pt_->parent()->isRobot()) {
             p_origin = p_pt_->worldcoords();
         }
-        coordinates cds;
-        p_origin.transformation(cds, s_cp_->worldcoords());
-        Position p; cds.toPosition(p);
+        coordinates offset_cds;
+        p_origin.transformation(offset_cds, s_cp_->worldcoords());
+        Position p; offset_cds.toPosition(p);
         lk->setOffsetPosition(p);
         DEBUG_STREAM(" link : " << _pt->name());
         DEBUG_STREAM(" parent : " << p_pt_->name());
-        DEBUG_STREAM(" coords(parent)" << p_origin);
-        DEBUG_STREAM(" coords(self)" << s_cp_->worldcoords());
+        DEBUG_STREAM(" coords(parent) : " << p_origin);
+        DEBUG_STREAM(" coords(self) : " << s_cp_->worldcoords());
+        DEBUG_STREAM(" offset : " << offset_cds);
+        DEBUG_STREAM(" link_origin_to_self : " << link_origin_to_self_);
 
         RoboasmConnectingPointPtr act_;
         if (p_cp_->isActuator()) {
@@ -359,9 +361,13 @@ Link *RoboasmBodyCreator::createLink(RoboasmPartsPtr _pt, bool _is_root, DevLink
 
     // Mass Parameter
     if (!!_pt->info && _pt->info->hasMassParam) {
-        lk->setCenterOfMass(_pt->info->COM);
+        Vector3 com(_pt->info->COM);
+        link_origin_to_self_.transform_vector(com);
+        lk->setCenterOfMass(com);
         lk->setMass(_pt->info->mass);
-        lk->setInertia(_pt->info->inertia_tensor);
+        Matrix3 rr(link_origin_to_self_.rot);
+        Matrix3 in_(rr * _pt->info->inertia_tensor * rr.transpose());
+        lk->setInertia(in_);
     }
 #if 0
     // Debug for shape
@@ -436,7 +442,7 @@ Link *RoboasmBodyCreator::createLink(RoboasmPartsPtr _pt, bool _is_root, DevLink
     if(!!_pt->info && _pt->info->extra_data.size() > 0) {
         for(auto it = _pt->info->extra_data.begin();
             it != _pt->info->extra_data.end(); it++) {
-            cnoid::Device *dev = createDevice(*it, device_counter++);
+            cnoid::Device *dev = createDevice(*it, device_counter++, link_origin_to_self_);
             if(!!dev) {
                 _dev_list.push_back(std::make_pair(dev, lk));
             }
