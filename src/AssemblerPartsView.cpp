@@ -17,6 +17,13 @@
 using namespace cnoid;
 namespace ra = cnoid::robot_assembler;
 
+static void listString(std::string &_res, double a)
+{
+    std::ostringstream oss;
+    oss << std::setprecision(5);
+    oss << "[ " << a << " ]";
+    _res = oss.str();
+}
 static void listString(std::string &_res, double a, double b)
 {
     std::ostringstream oss;
@@ -176,6 +183,13 @@ public:
         listString(str_, a, b);
         addEditorToPanel(_label, str_, row, func);
     }
+    void addVectorToPanel(const std::string &_label, double a, int row,
+                          std::function<void(const std::string &_txt)> func = nullptr)
+    {
+        std::string str_;
+        listString(str_, a);
+        addEditorToPanel(_label, str_, row, func);
+    }
     void infoRobot(const std::string &_key, const std::string &_str)
     {
         if(!!current_info) {
@@ -314,6 +328,26 @@ public:
                 ra::addMapping(current_info, _type, _name, tgt_);
             } else {
                 addToMapping(mp_, _key, _str);
+            }
+        }
+    }
+    void info_float_(const std::string &_type, const std::string &_name,
+                     const std::string &_key, const std::string &_txt)
+    {
+        double val;
+        DEBUG_SIMPLE("info_float_");
+        if(parseFromString(val, _txt)) {
+            DEBUG_SIMPLE("float parsed");
+            if(!!current_info) {
+                DEBUG_SIMPLE("cur_info");
+                Mapping *mp_ = ra::getMapping(current_info, _type, _name);
+                if(!mp_) {
+                    MappingPtr tgt_ = new Mapping();
+                    addToMapping(tgt_, _key, val);
+                    ra::addMapping(current_info, _type, _name, tgt_);
+                } else {
+                    addToMapping(mp_, _key, val);
+                }
             }
         }
     }
@@ -626,6 +660,18 @@ void AssemblerPartsView::Impl::panelConnectingPoint(ra::RoboasmCoordsPtr _coords
             ra::Actuator *ainfo = dynamic_cast<ra::Actuator*>(info);
             if(!!ainfo) {
                 addDescriptionToPanel("axis", ainfo->axis, row++);
+                {
+                double a = 0;
+                if(!!current_info) {
+                    Mapping *mp_ = ra::getActuatorInfo(current_info, nm_);
+                    if(!!mp_) {
+                        readFromMapping(mp_, "current_angle", a);
+                        DEBUG_SIMPLE("cur_ang: " << a);
+                    }
+                }
+                addVectorToPanel("current_angle", a, row++,
+                                 [this,nm_] (const std::string &_s) { info_float_("actuator-info", nm_, "current_angle", _s); } );
+                }
                 {
                 double a = ainfo->limit[0];
                 double b = ainfo->limit[1];
