@@ -97,6 +97,11 @@ public:
         self->updateDescendants();
         updateFromSelf();
     }
+    void updateStructure()
+    {
+        // [TODO]
+        // parse self
+    }
     void setInitialCoords(coordinates &_coords)
     {
         // [TODO]

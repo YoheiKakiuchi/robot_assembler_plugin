@@ -564,9 +564,10 @@ void RoboasmParts::assocConnectingPoint(ConnectingPoint* cp, const std::string &
     } else {
         nm = cp->name;
     }
-    RoboasmCoordsPtr ptr = std::make_shared<RoboasmConnectingPoint> (nm, cp);
+    RoboasmConnectingPointPtr ptr = std::make_shared<RoboasmConnectingPoint> (nm, cp);
     ptr->newcoords(cp->coords);
     this->assoc(ptr);
+    ptr->default_coords = *ptr;   // initialize only here
 }
 
 //// [roboasm robot] ////

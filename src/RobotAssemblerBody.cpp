@@ -362,6 +362,11 @@ Link *RoboasmBodyCreator::createLink(RoboasmPartsPtr _pt, bool _is_root, DevLink
                 } else {
                     lk->setJointEffortRange(ainfo_->tqlimit[0], ainfo_->tqlimit[1]);
                 }
+                double cur_ang;
+                if (cinfo.getActuatorValue(act_->name(), "current_angle",  cur_ang)) {
+                    DEBUG_STREAM(" " << act_->name() << " || cur_ang: " << cur_ang);
+                    // TODO
+                }
             } else {
                 // no ainfo
             }
