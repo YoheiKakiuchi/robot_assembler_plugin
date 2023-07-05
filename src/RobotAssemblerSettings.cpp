@@ -987,6 +987,8 @@ bool Settings::Impl::parseActuator(ValueNode *vn, Actuator &act)
         tp_ =  ConnectingPoint::Linear;
     } else if (act_type ==  "fixed") {
         tp_ =  ConnectingPoint::Fixed;
+    } else if (act_type ==  "complex") {
+        tp_ =  ConnectingPoint::Complex;
     } else {
         ERROR_STREAM(" unknown actuator-type:" << act_type);
         return false;
@@ -1015,6 +1017,10 @@ bool Settings::Impl::parseActuator(ValueNode *vn, Actuator &act)
             ERROR_STREAM(" invalid axis[string] : " << ax);
             return false;
         }
+        //[new ACT]
+        act.parameter.push_back(act.axis.x())
+        act.parameter.push_back(act.axis.y())
+        act.parameter.push_back(act.axis.z())
     } else if ( val->isListing() ) {
         std::vector<double> ax;
         readVector(val, ax, std::cerr);
@@ -1022,6 +1028,8 @@ bool Settings::Impl::parseActuator(ValueNode *vn, Actuator &act)
             Vector3 v(ax[0], ax[1], ax[2]);
             v.normalize();
             act.axis = v;
+            //[new ACT]
+            act.parameter = ax;
         } else {
             // [todo] size error
         }

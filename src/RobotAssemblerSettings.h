@@ -111,8 +111,9 @@ public:
         Sphere     = 1 << 3,
         Plane      = 1 << 4,
         Spherical  = 1 << 5,
-        Free       = 1 << 6,
-        UNDEFINED  = 1 << 7
+        Complex    = 1 << 6,
+        Free       = 1 << 7,
+        UNDEFINED  = 1 << 8
     };
 
     ConnectingPoint() : type(Parts) {}
@@ -143,6 +144,12 @@ public:
     double limit[2];
     double vlimit[2];
     double tqlimit[2];
+
+    std::vector<ConnectingPoint::PartsType> type_list;
+    std::vector<double> parameter;
+    std::vector<double> qlimits;
+    std::vector<double> vlimits;
+    std::vector<double> tqlimits;
 };
 struct CNOID_EXPORT ExtraInfo
 {
