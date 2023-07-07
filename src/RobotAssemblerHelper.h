@@ -43,9 +43,7 @@ public:
     void changeState(Clicked _clk = DEFAULT);
     RASceneRobot *scene_robot() { return robot_ptr; }
 
-    void updateCoords()
-    {
-    }
+    void updateCoords() {}
 protected:
     RASceneRobot *robot_ptr;
     RoboasmConnectingPointPtr self;
@@ -70,17 +68,7 @@ public:
     RASceneRobot *scene_robot() { return robot_ptr; }
     void drawBoundingBox(bool _on = true);
     bool updateColor(Vector3f &_color);
-
-    void updateCoords()
-    {
-        Position p;
-        self->worldcoords().toPosition(p);
-        position() = p;
-
-        for(auto it = spoint_list.begin(); it != spoint_list.end(); it++) {
-            (*it)->updateCoords();
-        }
-    }
+    void updateCoords();
 protected:
     RASceneRobot *robot_ptr;
     RoboasmPartsPtr self;

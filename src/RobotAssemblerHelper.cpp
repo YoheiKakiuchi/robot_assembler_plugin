@@ -105,6 +105,10 @@ static SgMaterial *searchMaterial(SgNode *_node)
     }
     return nullptr;
 }
+
+//
+// RASceneConnectingPoint
+//
 RASceneConnectingPoint::RASceneConnectingPoint(RoboasmConnectingPointPtr _c)
     : SgPosTransform(), self(_c), current_state(DEFAULT)
 {
@@ -169,6 +173,9 @@ void RASceneConnectingPoint::changeState(RASceneConnectingPoint::Clicked _clk)
     break;
     }
 }
+//
+// RASceneParts
+//
 RASceneParts::RASceneParts(RoboasmPartsPtr _p, const std::string &_proj_dir)
     : SgPosTransform(), self(_p), partsScene(nullptr)
 {
@@ -198,6 +205,7 @@ RASceneParts::RASceneParts(RoboasmPartsPtr _p, const std::string &_proj_dir)
         }
     }
     // for making parts already connected
+    // [TOFIX]
     if(_p->hasParent() && _p->parent()->isConnectingPoint()) {
         RoboasmCoords *ra_p = _p->parent();
         if (ra_p->hasParent()) {
@@ -242,6 +250,19 @@ bool RASceneParts::updateColor(Vector3f &_color)
     }
     return false;
 }
+void RASceneParts::updateCoords()
+{
+    Position p;
+    self->worldcoords().toPosition(p);
+    position() = p;
+    // update coords of connecting-points
+    for(auto it = spoint_list.begin(); it != spoint_list.end(); it++) {
+        (*it)->updateCoords();
+    }
+}
+//
+// RASceneRobot
+//
 RASceneRobot::RASceneRobot(RoboasmRobotPtr _r, AssemblerManager *_ma)
     : SgPosTransform(), self(_r)
 {

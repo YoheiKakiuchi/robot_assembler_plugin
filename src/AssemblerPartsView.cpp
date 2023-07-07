@@ -17,17 +17,26 @@
 using namespace cnoid;
 namespace ra = cnoid::robot_assembler;
 
+#define PRINT_PRECISION 5
+
+static void floatString(std::string &_res, double a)
+{
+    std::ostringstream oss;
+    oss << std::setprecision(PRINT_PRECISION);
+    oss << a;
+    _res = oss.str();
+}
 static void listString(std::string &_res, double a)
 {
     std::ostringstream oss;
-    oss << std::setprecision(5);
+    oss << std::setprecision(PRINT_PRECISION);
     oss << "[ " << a << " ]";
     _res = oss.str();
 }
 static void listString(std::string &_res, double a, double b)
 {
     std::ostringstream oss;
-    oss << std::setprecision(5);
+    oss << std::setprecision(PRINT_PRECISION);
     oss << "[";
     oss << a << ", ";
     oss << b << "]";
@@ -36,7 +45,7 @@ static void listString(std::string &_res, double a, double b)
 static void listString(std::string &_res, double a, double b, double c)
 {
     std::ostringstream oss;
-    oss << std::setprecision(5);
+    oss << std::setprecision(PRINT_PRECISION);
     oss << "[";
     oss << a << ", ";
     oss << b << ", ";
@@ -97,10 +106,9 @@ public:
     }
     void addDescriptionToPanel(const std::string &_label, double a, int row)
     {
-        std::ostringstream oss;
-        oss << std::setprecision(5);
-        oss << a;
-        addDescriptionToPanel(_label, oss.str(), row);
+        std::string str_;
+        floatString(str_, a);
+        addDescriptionToPanel(_label, str_, row);
     }
     void addDescriptionToPanel(const std::string &_label, coordinates &_cds, int row)
     {
@@ -187,7 +195,7 @@ public:
                           std::function<void(const std::string &_txt)> func = nullptr)
     {
         std::string str_;
-        listString(str_, a);
+        floatString(str_, a);
         addEditorToPanel(_label, str_, row, func);
     }
     void infoRobot(const std::string &_key, const std::string &_str)
@@ -331,25 +339,26 @@ public:
             }
         }
     }
-    void info_float_(const std::string &_type, const std::string &_name,
-                     const std::string &_key, const std::string &_txt)
+    bool info_float_(const std::string &_type, const std::string &_name,
+                     const std::string &_key, const std::string &_txt, double &_val)
     {
-        double val;
         DEBUG_SIMPLE("info_float_");
-        if(parseFromString(val, _txt)) {
-            DEBUG_SIMPLE("float parsed");
+        if(parseFromString(_val, _txt)) {
+            DEBUG_SIMPLE("float parsed : " << _val);
             if(!!current_info) {
                 DEBUG_SIMPLE("cur_info");
                 Mapping *mp_ = ra::getMapping(current_info, _type, _name);
                 if(!mp_) {
                     MappingPtr tgt_ = new Mapping();
-                    addToMapping(tgt_, _key, val);
+                    addToMapping(tgt_, _key, _val);
                     ra::addMapping(current_info, _type, _name, tgt_);
                 } else {
-                    addToMapping(mp_, _key, val);
+                    addToMapping(mp_, _key, _val);
                 }
+                return true;
             }
         }
+        return false;
     }
     void info_vec2_(const std::string &_type, const std::string &_name,
                    const std::string &_key, const std::string &_txt)
@@ -660,7 +669,7 @@ void AssemblerPartsView::Impl::panelConnectingPoint(ra::RoboasmCoordsPtr _coords
             ra::Actuator *ainfo = dynamic_cast<ra::Actuator*>(info);
             if(!!ainfo) {
                 addDescriptionToPanel("axis", ainfo->axis, row++);
-                {
+                {// curreng_angle
                 double a = 0;
                 if(!!current_info) {
                     Mapping *mp_ = ra::getActuatorInfo(current_info, nm_);
@@ -670,9 +679,35 @@ void AssemblerPartsView::Impl::panelConnectingPoint(ra::RoboasmCoordsPtr _coords
                     }
                 }
                 addVectorToPanel("current_angle", a, row++,
-                                 [this,nm_] (const std::string &_s) { info_float_("actuator-info", nm_, "current_angle", _s); } );
+                                 [this,nm_, _coords] (const std::string &_s) {
+                                     double _val;
+                                     if (info_float_("actuator-info", nm_, "current_angle", _s, _val)) {
+                                         // update robot
+                                         ra::RASceneBase *res = manager->coordsToScene(_coords);
+                                         if (!!res) {
+                                             ra::RASceneConnectingPoint *pt = dynamic_cast<ra::RASceneConnectingPoint*>(res);
+                                             if (!!pt) {
+                                                 ra::RASceneRobot *rb = pt->scene_robot();
+                                                 rb->robot()->applyJointAngle(nm_, _val);
+                                                 rb->updateStructure();
+                                                 rb->notifyUpdate(SgUpdate::MODIFIED);
+                                             }
+                                         }
+                                     } } );
                 }
-                {
+                {// curreng_angle
+                double a = 0;
+                if(!!current_info) {
+                    Mapping *mp_ = ra::getActuatorInfo(current_info, nm_);
+                    if(!!mp_) {
+                        readFromMapping(mp_, "initial_angle", a);
+                    }
+                }
+                addVectorToPanel("initial_angle", a, row++,
+                                 [this,nm_] (const std::string &_s) {
+                                     double _a; info_float_("actuator-info", nm_, "initial_angle", _s, _a); } );
+                }
+                {// limit
                 double a = ainfo->limit[0];
                 double b = ainfo->limit[1];
                 if(!!current_info) {
@@ -685,7 +720,7 @@ void AssemblerPartsView::Impl::panelConnectingPoint(ra::RoboasmCoordsPtr _coords
                 addVectorToPanel("limit", a, b, row++,
                                  [this,nm_] (const std::string &_s) { infoActuatorVec2(nm_, "limit", _s); } );
                 }
-                {
+                {// vlimit
                 double a = ainfo->vlimit[0];
                 double b = ainfo->vlimit[1];
                 if(!!current_info) {
@@ -697,7 +732,7 @@ void AssemblerPartsView::Impl::panelConnectingPoint(ra::RoboasmCoordsPtr _coords
                 addVectorToPanel("vlimit", a, b, row++,
                                  [this,nm_] (const std::string &_s) { infoActuatorVec2(nm_, "vlimit", _s); } );
                 }
-                {
+                {// tqlimit
                 double a = ainfo->tqlimit[0];
                 double b = ainfo->tqlimit[1];
                 if(!!current_info) {

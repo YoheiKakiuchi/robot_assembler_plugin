@@ -362,17 +362,11 @@ Link *RoboasmBodyCreator::createLink(RoboasmPartsPtr _pt, bool _is_root, DevLink
                 } else {
                     lk->setJointEffortRange(ainfo_->tqlimit[0], ainfo_->tqlimit[1]);
                 }
-                //// not applied
-                double cur_ang;
-                if (cinfo.getActuatorValue(act_->name(), "current_angle",  cur_ang)) {
-                    DEBUG_STREAM(" " << act_->name() << " || cur_ang: " << cur_ang);
-                    // [TODO]
+                double init_ang;
+                if (cinfo.getActuatorValue(act_->name(), "initial_angle",  init_ang)) {
+                    DEBUG_STREAM(" " << act_->name() << ", initial_ang <= " << init_ang);
+                    lk->setInitialJointAngle(init_ang);
                 }
-                if (cinfo.getActuatorValue(act_->name(), "default_angle",  cur_ang)) {
-                    DEBUG_STREAM(" " << act_->name() << " || def_ang: " << cur_ang);
-                    // [TODO]
-                }
-                //// not applied
             } else {
                 // no ainfo
             }
@@ -561,23 +555,27 @@ BodyPtr RoboasmBodyCreator::createBody(RoboasmRobotPtr _rb, MappingPtr _info, co
     if (reset_angle) {
         // reset angle to default
         connectingPointPtrList a_act;
-        _rb->activeActuators(a_act);
+        _rb->inactiveActuators(a_act);
+
         for(auto it = a_act.begin(); it != a_act.end(); it++) {
-            (*it)->applyJointAngle(0.0);
+            DEBUG_STREAM(" reset: " << (*it)->name());
+            (*it)->resetJointAngle();
         }
     }
 
     //// Create Body
+    _rb->updateDescendants();
     _createBody(_rb, local_name);
 
     if (reset_angle) {
         // revert angle
         cnoidRAInfo cinfo(info);
         connectingPointPtrList a_act;
-        _rb->activeActuators(a_act);
+        _rb->inactiveActuators(a_act);
         for(auto it = a_act.begin(); it != a_act.end(); it++) {
             double ang;
             if (cinfo.getActuatorValue((*it)->name(), "current_angle", ang)) {
+                DEBUG_STREAM(" set: " << (*it)->name() << " <= " << ang);
                 (*it)->applyJointAngle(ang);
             }
         }
