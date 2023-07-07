@@ -362,11 +362,17 @@ Link *RoboasmBodyCreator::createLink(RoboasmPartsPtr _pt, bool _is_root, DevLink
                 } else {
                     lk->setJointEffortRange(ainfo_->tqlimit[0], ainfo_->tqlimit[1]);
                 }
+                //// not applied
                 double cur_ang;
                 if (cinfo.getActuatorValue(act_->name(), "current_angle",  cur_ang)) {
                     DEBUG_STREAM(" " << act_->name() << " || cur_ang: " << cur_ang);
-                    // TODO
+                    // [TODO]
                 }
+                if (cinfo.getActuatorValue(act_->name(), "default_angle",  cur_ang)) {
+                    DEBUG_STREAM(" " << act_->name() << " || def_ang: " << cur_ang);
+                    // [TODO]
+                }
+                //// not applied
             } else {
                 // no ainfo
             }
@@ -528,11 +534,14 @@ BodyPtr RoboasmBodyCreator::_createBody(RoboasmRobotPtr _rb, const std::string &
     }
     return body;
 }
-BodyPtr RoboasmBodyCreator::createBody(RoboasmRobotPtr _rb, const std::string &_name)
+BodyPtr RoboasmBodyCreator::createBody(RoboasmRobotPtr _rb, MappingPtr _info, const std::string &_name, bool reset_angle)
 {
+    info = _info;
+
     body = new Body();
     currentRobot = _rb;
 
+    // set robot-name
     std::string local_name;
     if(_name.size() > 0) {
         local_name = _name;
@@ -549,7 +558,30 @@ BodyPtr RoboasmBodyCreator::createBody(RoboasmRobotPtr _rb, const std::string &_
         local_name = _rb->name();
     }
 
+    if (reset_angle) {
+        // reset angle to default
+        connectingPointPtrList a_act;
+        _rb->activeActuators(a_act);
+        for(auto it = a_act.begin(); it != a_act.end(); it++) {
+            (*it)->applyJointAngle(0.0);
+        }
+    }
+
+    //// Create Body
     _createBody(_rb, local_name);
+
+    if (reset_angle) {
+        // revert angle
+        cnoidRAInfo cinfo(info);
+        connectingPointPtrList a_act;
+        _rb->activeActuators(a_act);
+        for(auto it = a_act.begin(); it != a_act.end(); it++) {
+            double ang;
+            if (cinfo.getActuatorValue((*it)->name(), "current_angle", ang)) {
+                (*it)->applyJointAngle(ang);
+            }
+        }
+    }
 
     if (merge_fixed_joint) {
         mergeFixedJoint(body);

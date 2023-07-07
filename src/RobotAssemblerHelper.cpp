@@ -204,8 +204,10 @@ RASceneParts::RASceneParts(RoboasmPartsPtr _p, const std::string &_proj_dir)
             RoboasmCoordsPtr cds_ptr = ra_p->parent()->isDirectDescendant(ra_p);
             RoboasmConnectingPointPtr ptr = dynamic_pointer_cast<RoboasmConnectingPoint>(cds_ptr);
             if(!!ptr) {
-                 RASceneConnectingPoint *cp = new RASceneConnectingPoint(ptr);
+                RASceneConnectingPoint *cp = new RASceneConnectingPoint(ptr);
                 //this->addChild(cp);
+                Vector3f col(1.0f, 1.0f, 0);
+                cp->material->setDiffuseColor(col);
                 partsScene->addChild(cp);
                 spoint_list.push_back(cp);
             }

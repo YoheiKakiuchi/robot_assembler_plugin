@@ -419,6 +419,32 @@ bool RoboasmConnectingPoint::checkValidity()
     }
     return true;
 }
+bool RoboasmConnectingPoint::applyJointAngle(double angle)
+{
+    if (!isActuator()) return false;
+    Actuator *ainfo_ = dynamic_cast<Actuator*>(info);
+    DEBUG_STREAM(" aj: " << name() << " <= " << angle);
+    if(isInverted()) { // OK???
+        angle = -angle;
+    }
+    if (ainfo_->getType() == ConnectingPoint::Rotational) {
+        coordinates newcds (default_coords);
+        newcds.rotate(angle, ainfo_->axis);
+        this->newcoords(newcds);
+    } else if (ainfo_->getType() == ConnectingPoint::Linear) {
+        Vector3 tr_(ainfo_->axis);
+        tr_ *= angle;
+        coordinates newcds (default_coords);
+        newcds.translate(tr_);
+        this->newcoords(newcds);
+    }
+    return true;
+}
+void RoboasmConnectingPoint::resetJointAngle()
+{
+    this->newcoords(default_coords);
+}
+
 //// [roboasm parts] ////
 RoboasmParts::RoboasmParts(const std::string &_name, Parts *_info)
     : RoboasmCoords(_name), info(_info), color(Vector3f::Zero())
@@ -948,6 +974,15 @@ void RoboasmRobot::connectedPoints(connectingPointPtrList &lst)
             lst.push_back(*it);
         }
     }
+}
+bool RoboasmRobot::applyJointAngle(const std::string &_nm, double angle)
+{
+    RoboasmCoordsPtr pt = this->find(_nm);
+    if(pt->isActuator()) {
+        pt->toConnectingPoint()->applyJointAngle(angle);
+        return true;
+    }
+    return false;
 }
 //// [RoboasmUtil] ////
 RoboasmUtil::RoboasmUtil(const std::string &filename)
