@@ -423,13 +423,17 @@ bool RoboasmConnectingPoint::applyJointAngle(double angle)
 {
     if (!isActuator()) return false;
     Actuator *ainfo_ = dynamic_cast<Actuator*>(info);
-    DEBUG_STREAM(" aj: " << name() << " <= " << angle);
+    //DEBUG_STREAM(" >> jname: " << name() << " <= " << angle);
     if(isInverted()) { // OK???
         angle = -angle;
     }
     if (ainfo_->getType() == ConnectingPoint::Rotational) {
         coordinates newcds (default_coords);
+        //DEBUG_STREAM(" >> cds: " << default_coords);
+        //DEBUG_STREAM(" >> ang: " << angle);
+        //DEBUG_STREAM(" >>  ax: " << ainfo_->axis);
         newcds.rotate(angle, ainfo_->axis);
+        //DEBUG_STREAM(" >> new: " << newcds);
         this->newcoords(newcds);
     } else if (ainfo_->getType() == ConnectingPoint::Linear) {
         Vector3 tr_(ainfo_->axis);
@@ -889,6 +893,7 @@ bool RoboasmRobot::attach(RoboasmCoordsPtr robot_or_parts,
     }
     //DEBUG_SIMPLE( "assoc" );
     _robot_point->assoc(_parts_point);
+    _parts_point->default_coords = *_parts_point; // update default_coords
     //DEBUG_SIMPLE( "update" );
     updateDescendants();
 

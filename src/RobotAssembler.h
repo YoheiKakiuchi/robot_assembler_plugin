@@ -203,7 +203,7 @@ public:
     ConnectingPoint *info;
 
     bool isInverted() {
-        return ( hasParent() && isConnectingPoint() );
+        return ( hasParent() && parent_ptr->isConnectingPoint() );
     }
     bool applyJointAngle(double angle);
     void resetJointAngle();
