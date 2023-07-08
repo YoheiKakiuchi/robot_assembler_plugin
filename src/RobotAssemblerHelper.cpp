@@ -95,7 +95,7 @@ static void createShapeConnectingPoint(SgPosTransform *_root, SgMaterialPtr &_re
         sw_g->addChild(pt);
     }
     if (!_axis.isZero()) { // valid axis
-        //// [TODO] update shape
+        //// [todo] update shape
         Isometry3 pos_;
         pos_.setIdentity();
         pos_.translation() = SCP_LENGTH_SHORT * _axis;
@@ -233,13 +233,11 @@ RASceneParts::RASceneParts(RoboasmPartsPtr _p, const std::string &_proj_dir)
         RoboasmConnectingPointPtr ptr = dynamic_pointer_cast<RoboasmConnectingPoint>(*it);
         if(!!ptr) {
             RASceneConnectingPoint *cp = new RASceneConnectingPoint(ptr);
-            //this->addChild(cp);
             partsScene->addChild(cp);
             spoint_list.push_back(cp);
         }
     }
     // for making parts already connected
-    // [TOFIX]
     if(_p->hasParent() && _p->parent()->isConnectingPoint()) {
         RoboasmCoords *ra_p = _p->parent();
         if (ra_p->hasParent()) {
@@ -247,7 +245,11 @@ RASceneParts::RASceneParts(RoboasmPartsPtr _p, const std::string &_proj_dir)
             RoboasmConnectingPointPtr ptr = dynamic_pointer_cast<RoboasmConnectingPoint>(cds_ptr);
             if(!!ptr) {
                 RASceneConnectingPoint *cp = new RASceneConnectingPoint(ptr);
-                //this->addChild(cp);
+                // invert position
+                coordinates newtrans;
+                _p->worldcoords().transformation(newtrans, ptr->worldcoords());
+                newtrans.toPosition(cp->position());
+                // add color
                 Vector3f col(1.0f, 1.0f, 0);
                 cp->material->setDiffuseColor(col);
                 partsScene->addChild(cp);
