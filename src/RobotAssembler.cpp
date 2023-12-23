@@ -1060,6 +1060,9 @@ RoboasmRobotPtr RoboasmUtil::makeRobot(const std::string &_name, const std::stri
     } else {
         pt_ = makeParts(_parts_key);
     }
+    if ( !pt_ ) {
+        return nullptr;
+    }
     pt_->color = _color;
     return makeRobot(_name, pt_);
 }
