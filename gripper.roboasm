@@ -1,0 +1,46 @@
+history: 
+  - 
+    parts-name: Frame_Long_Socket_181146_1
+    parts-type: Frame_Long_Socket
+    initial-parts: true
+  - 
+    parts-name: XL-430_181146_0
+    parts-type: XL-430
+    parts-point: right-side
+    parent: Frame_Long_Socket_181146_1
+    parent-point: connect_point
+  - 
+    parts-name: Frame_Short_Socket_181146_2
+    parts-type: Frame_Short_Socket
+    parts-point: side_connect_point1
+    parent: XL-430_181146_0
+    parent-point: bottom-side1
+  - 
+    parts-name: Hinge_Short_Socket_181146_3
+    parts-type: Hinge_Short_Socket
+    parts-point: side_connect_point
+    parent: XL-430_181146_0
+    parent-point: horn
+  - 
+    parts-name: move_finger_243040_2
+    parts-type: move_finger
+    parts-point: plug_0_0
+    parent: Hinge_Short_Socket_181146_3
+    parent-point: socket_0_3
+  - 
+    parts-name: fixed_finger_243040_3
+    parts-type: fixed_finger
+    parts-point: plug_0_3
+    parent: Frame_Short_Socket_181146_2
+    parent-point: socket_0_3
+robot-info: 
+  name: simple_gripper
+parts-info: 
+  move_finger_243040_2: 
+    color: [ 0.0000000, 1.0000000, 1.0000000 ]
+  fixed_finger_243040_3: 
+    color: [ 0.0000000, 1.0000000, 1.0000000 ]
+actuator-info: 
+  XL-430_181146_0/horn: 
+    current-angle: 0.785400000000
+    initial-angle: 0.785400000000
