@@ -257,6 +257,17 @@ public:
         }
         return -1;
     }
+// TODO
+// add ConnectingType
+// add ConnectingConfiguration
+// add ConnectingTypeMatch
+    bool validateParts(const Parts &pt);
+    bool parseParts(const std::string &settings, std::vector<Parts> &results);
+    bool parsePartsFromYaml(const std::string &filename, std::vector<Parts> &results);
+    bool insertParts(const Parts &pt);
+    bool insertPartsFromString(const std::string &settings);
+    bool insertPartsFromYaml(const std::string &filename);
+
 private:
     class Impl;
     Impl *impl;

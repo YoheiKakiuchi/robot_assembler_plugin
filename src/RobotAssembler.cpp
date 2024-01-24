@@ -1164,6 +1164,9 @@ RoboasmRobotPtr RoboasmUtil::makeRobot(RoboasmFile &_roboasm_file)
         name_ = "AssebleRobot";
     }
     ret = makeRobot(name_, _roboasm_file.history);
+    if (!ret) {
+        return nullptr;
+    }
     // assemble-config
     if (!_roboasm_file.config.initial_coords.isInitial(1e-12)) {
         DEBUG_STREAM(" initial-coords : " << _roboasm_file.config.initial_coords);
