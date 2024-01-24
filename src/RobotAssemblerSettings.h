@@ -219,8 +219,6 @@ public:
     std::vector<ConnectingPoint> connecting_points;
     std::vector<Actuator> actuators;
     std::vector<ExtraInfo> extra_data;
-
-    bool checkValidity();
 };
 ////
 class CNOID_EXPORT Settings
@@ -245,8 +243,20 @@ public:
     // match / invert?
     // A, A => parent/child <-
     // B, C => parent/child <-
-    ConnectingTypeID searchConnectingType(const std::string &name);
-    ConnectingConfigurationID searchConnectingConfiguration(const std::string &name);
+    ConnectingTypeID searchConnectingTypeID(const std::string &name) {
+        ConnectingType *res = searchConnectingType(name);
+        if (!!res) {
+            return res->index;
+        }
+        return -1;
+    }
+    ConnectingConfigurationID searchConnectingConfigurationID(const std::string &name) {
+        ConnectingConfiguration *res = searchConnectingConfiguration(name);
+        if (!!res) {
+            return res->index;
+        }
+        return -1;
+    }
 private:
     class Impl;
     Impl *impl;
