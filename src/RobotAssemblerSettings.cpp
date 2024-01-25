@@ -249,6 +249,7 @@ public:
     bool parseExtraInfo(ValueNode *vn, ExtraInfo &einfo);
     //
     void parseParts(YAMLReader &reader, std::vector<Parts> &results);
+    void parseParts(ValueNode *val, std::vector<Parts> &results);
     //
     bool parseCoords(Mapping *map_, coordinates &cds);
 
@@ -353,7 +354,7 @@ bool Settings::validateParts(const Parts &pt)
     }
     return true;
 }
-bool Settings::parseParts(const std::string &settings, std::vector<Parts> &results)
+bool Settings::parsePartsFromString(const std::string &settings, std::vector<Parts> &results)
 {
     YAMLReader yaml_reader;
     if (! yaml_reader.parse(settings)) {
@@ -373,6 +374,11 @@ bool Settings::parsePartsFromYaml(const std::string &filename, std::vector<Parts
     impl->parseParts(yaml_reader, results);
     return true;
 }
+bool Settings::parsePartsFromNode(ValueNode *val, std::vector<Parts> &results)
+{
+    impl->parseParts(val, results);
+    return true;
+}
 bool Settings::insertParts(const Parts &pt)
 {
     mapParts.insert(std::make_pair(pt.type, pt));
@@ -382,11 +388,13 @@ bool Settings::insertPartsFromString(const std::string &settings)
 {
     std::vector<Parts> lst;
     bool res;
-    res = parseParts(settings, lst);
+    res = parsePartsFromString(settings, lst);
     if (res && lst.size() > 0) {
         for(auto it = lst.begin(); it != lst.end(); it++) {
             if (validateParts(*it)) {
                 insertParts(*it);
+            } else {
+                res = false;
             }
         }
     }
@@ -401,6 +409,24 @@ bool Settings::insertPartsFromYaml(const std::string &filename)
         for(auto it = lst.begin(); it != lst.end(); it++) {
             if (validateParts(*it)) {
                 insertParts(*it);
+            } else {
+                res = false;
+            }
+        }
+    }
+    return res;
+}
+bool Settings::insertPartsFromNode(ValueNode *val)
+{
+    std::vector<Parts> lst;
+    bool res;
+    res = parsePartsFromNode(val, lst);
+    if (res && lst.size() > 0) {
+        for(auto it = lst.begin(); it != lst.end(); it++) {
+            if (validateParts(*it)) {
+                insertParts(*it);
+            } else {
+                res = false;
             }
         }
     }
@@ -596,18 +622,22 @@ void Settings::Impl::parseParts(YAMLReader &reader, std::vector<Parts> &results)
 {
     for(int i = 0; i < reader.numDocuments(); i++) {
         ValueNode *val = reader.document(i);
-        if ( val->isMapping() ) {
+        parseParts(val, results);
+    }
+}
+void Settings::Impl::parseParts(ValueNode *val, std::vector<Parts> &results)
+{
+    if ( val->isMapping() ) {
+        Parts pt;
+        if(parseParts(val, pt)) {
+            results.push_back(pt);
+        }
+    } else if ( val->isListing() ) {
+        Listing *lst = val->toListing();
+        for(int i = 0; i < lst->size(); i++) {
             Parts pt;
-            if(parseParts(val, pt)) {
+            if(parseParts(lst->at(i), pt)) {
                 results.push_back(pt);
-            }
-        } else if ( val->isListing() ) {
-            Listing *lst = val->toListing();
-            for(int i = 0; i < lst->size(); i++) {
-                Parts pt;
-                if(parseParts(lst->at(i), pt)) {
-                    results.push_back(pt);
-                }
             }
         }
     }
