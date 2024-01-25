@@ -210,11 +210,12 @@ void exportPyRobotAssemblerSettings(py::module &m)
         return py::cast(nullptr);
     })
     .def("parseYaml", &ra::Settings::parseYaml)
-    .def("insertPartsFromYaml", &ra::Settings::insertPartsFromYaml)
     .def("insertPartsFromString", &ra::Settings::insertPartsFromString)
-    .def("parseParts", [](ra::Settings &self, const std::string &settings) {
+    .def("insertPartsFromYaml", &ra::Settings::insertPartsFromYaml)
+    .def("insertPartsFromNode", &ra::Settings::insertPartsFromNode)
+    .def("parsePartsFromString", [](ra::Settings &self, const std::string &settings) {
         py::list _lst; std::vector<ra::Parts> _res;
-        if (self.parseParts(settings, _res)) {
+        if (self.parsePartsFromString(settings, _res)) {
             for (auto it = _res.begin(); it != _res.end(); it++) _lst.append( py::cast(*it) );
         }
         return _lst;
@@ -226,7 +227,17 @@ void exportPyRobotAssemblerSettings(py::module &m)
         }
         return _lst;
     })
+    .def("parsePartsFromNode", [](ra::Settings &self, ValueNode *val) {
+        py::list _lst; std::vector<ra::Parts> _res;
+        if (self.parsePartsFromNode(val, _res)) {
+            for (auto it = _res.begin(); it != _res.end(); it++) _lst.append( py::cast(*it) );
+        }
+        return _lst;
+    })
     ;
+    //
+    // RoboasmFile
+    //
     py::class_< ra::RoboasmFile > roboasm_cls(m, "RoboasmFile");
     roboasm_cls.def(py::init<>())
     .def(py::init<const std::string &>())

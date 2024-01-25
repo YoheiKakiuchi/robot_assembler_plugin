@@ -6,6 +6,7 @@
 
 #include "../src/irsl_choreonoid/Coordinates.h"
 #include "../src/RobotAssembler.h"
+#include "../src/RobotAssemblerInfo.h"
 
 using namespace cnoid;
 namespace ra = cnoid::robot_assembler;
@@ -49,6 +50,23 @@ void exportPyRobotAssembler(py::module &m)
     //makeRobotFromHistory
     .def("makeRobot", (ra::RoboasmRobotPtr (ra::RoboasmUtil::*)(ra::RoboasmFile &_rafile)) &ra::RoboasmUtil::makeRobot)
     .def("makeRobotFromFile", &ra::RoboasmUtil::makeRobotFromFile)
+    ;
+
+    //
+    // cnoidRAFile
+    //
+    py::class_< ra::cnoidRAFile > rafile_cls(m, "cnoidRAFile");
+    rafile_cls.def(py::init<const std::string &>())//
+    .def("isValid", &ra::cnoidRAFile::isValid)
+    .def("parseRoboasm", [](ra::cnoidRAFile &self, const std::string &filename, bool parse_config) {
+        return self.parseRoboasm(filename, parse_config);
+    }, py::arg("filename"), py::arg("parseConfig") = true)
+    .def("dumpRoboasm", &ra::cnoidRAFile::dumpRoboasm)
+    .def("historyToMap", &ra::cnoidRAFile::historyToMap, py::arg("map") = nullptr)
+    .def("addInfo", &ra::cnoidRAFile::historyToMap, py::arg("map") = nullptr)
+    .def("updateRobotByInfo", &ra::cnoidRAFile::updateRobotByInfo)
+    .def("makeRobot", &ra::cnoidRAFile::makeRobot,
+         py::arg("util"), py::arg("name") = std::string(), py::arg("rename") = false)
     ;
 }
 

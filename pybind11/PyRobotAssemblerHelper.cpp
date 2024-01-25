@@ -7,6 +7,7 @@
 #include "../src/irsl_choreonoid/Coordinates.h"
 #include "../src/RobotAssemblerHelper.h"
 #include "../src/RobotAssemblerBody.h"
+#include "../src/RobotAssemblerInfo.h"
 
 using namespace cnoid;
 namespace ra = cnoid::robot_assembler;
@@ -44,12 +45,17 @@ void exportPyRobotAssemblerHelper(py::module &m)
     //
     py::class_< ra::RoboasmBodyCreator > body_creator_cls(m, "RoboasmBodyCreator");
     body_creator_cls.def(py::init<>())
-    .def(py::init<const std::string &>())
+    .def(py::init<const std::string &>())//project_dir
     // setName
     // setMergeFixedJoint
-    .def("createBody", [](ra::RoboasmBodyCreator &self, ra::RoboasmRobotPtr robot, MappingPtr info, const std::string &name, bool resetAngle) {
+    .def("createBodyRaw", [](ra::RoboasmBodyCreator &self, ra::RoboasmRobotPtr robot, MappingPtr info, const std::string &name, bool resetAngle) {
         return self.createBody(robot, info, name, resetAngle);
     }, py::arg("robot"), py::arg("info") = nullptr, py::arg("name") = std::string(), py::arg("resetAngle") = true)
+    .def("createBody", [](ra::RoboasmBodyCreator &self, ra::RoboasmRobotPtr robot, ra::cnoidRAFile &rafile, const std::string &name, bool resetAngle) {
+        Body *bd = self.createBody(robot, rafile.info, name, resetAngle);
+        MappingPtr roboasm = new Mapping(); rafile.historyToMap(roboasm); rafile.addInfo(roboasm);
+        bd->info()->insert("roboasm", roboasm); return bd;
+    }, py::arg("robot"), py::arg("rafile"), py::arg("name") = std::string(), py::arg("resetAngle") = true)
     ;
 }
 
