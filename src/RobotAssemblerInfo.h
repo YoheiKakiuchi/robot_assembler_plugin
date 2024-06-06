@@ -10,6 +10,7 @@
 namespace cnoid {
 namespace robot_assembler {
 MappingPtr CNOID_EXPORT parseInfo(const std::string &_fname);
+//MappingPtr CNOID_EXPORT parseInfoFromString(const std::string &instring);
 MappingPtr CNOID_EXPORT createInfo(RoboasmRobotPtr _rb);
 bool CNOID_EXPORT mergeInfo(Mapping *_dst, Mapping *_src);
 
@@ -81,7 +82,12 @@ inline bool getRobotCoords(Mapping *info, coordinates &_res)
     if(!mp_) return false;
     return readFromMapping(mp_, "initial-coords", _res);
 }
-
+inline bool getOffsetCoords(Mapping *info, coordinates &_res)
+{
+    Mapping *mp_ = getRobotInfo(info);
+    if(!mp_) return false;
+    return readFromMapping(mp_, "offset-coords", _res);
+}
 inline bool getPartsName(Mapping *info, const std::string &_pt, std::string &_res)
 {
     Mapping *mp_ = getPartsInfo(info, _pt);
@@ -185,6 +191,8 @@ public:
         return true;
     }
     virtual bool dumpRoboasm(const std::string &_filename) override;
+    //virtual bool parseRoboasmFromString(const std::string &instring, bool parse_config = true) override;
+    //virtual bool dumpRoboasmToString(std::string &result_str) override;
     MappingPtr historyToMap(MappingPtr _main = nullptr);
     MappingPtr addInfo(MappingPtr _main = nullptr);
     bool updateRobotByInfo(RoboasmRobotPtr _rb);
@@ -198,6 +206,7 @@ public:
 robot-info:
   name:
   initial-coords:
+  offset-coords:
 parts-info:
   partsname0: // name of parts
     name:
